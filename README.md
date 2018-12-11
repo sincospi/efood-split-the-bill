@@ -8,6 +8,6 @@ A react webapp for splitting the bill for e-food orders.
 
 ## Serve (development)
 
-`yarn serve`
+`yarn start`
 
 
