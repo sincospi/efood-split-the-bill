@@ -1,6 +1,6 @@
 # Split the bill (for Efood)
 
-A react webapp for splitting the bill for e-food orders.
+A react webapp for splitting the bill for e-food orders. [Check it out here](https://e-food-split-the-bill.netlify.com/).
 
 ## Installation
 
@@ -9,5 +9,3 @@ A react webapp for splitting the bill for e-food orders.
 ## Serve (development)
 
 `yarn start`
-
-
