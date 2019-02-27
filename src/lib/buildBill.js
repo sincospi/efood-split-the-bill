@@ -5,22 +5,25 @@ function characterizeText(text) {
   const lines = text.split('\n').filter(Boolean);
 
   return lines.map(line => {
-    const priceMatch = line.match(/([0-9.-]+)\s+€/);
+    const lineText = line.trim();
+    const priceMatch = lineText.match(/([0-9.-]+)\s+€/);
     if (priceMatch) {
       return { type: 'price', value: parseFloat(priceMatch[1]) };
     }
 
-    const quantityMatch = line.match(/^(\d)$/);
+    const quantityMatch = lineText.match(/^(\d)$/);
     if (quantityMatch) {
       return { type: 'quantity', value: parseInt(quantityMatch[0], 10) };
     }
 
-    return { type: 'description', value: line.trim() };
+    return { type: 'description', value: lineText };
   });
 }
 
 export default function buildBill(textBill) {
   const data = characterizeText(textBill);
+  data.forEach(item => console.debug(item));
+
   let totalAfterDiscountEuro = data.pop();
   if (totalAfterDiscountEuro.type === 'price') {
     totalAfterDiscountEuro = totalAfterDiscountEuro.value;
