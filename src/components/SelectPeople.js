@@ -6,7 +6,7 @@ import InputName from './InputName';
 export default class SelectPeople extends React.Component {
   handleCheckboxChange = ({ target }) => {
     const { value, checked } = target;
-    console.log('checked = ', value, checked);
+    console.debug('checked = ', value, checked);
     this.props.onTogglePerson(value);
   };
 

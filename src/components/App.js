@@ -3,7 +3,7 @@ import { Button, Icon, Collapse, Tag } from 'antd';
 
 import InputForm from './InputForm';
 import BillList from './BillList';
-import buildBill, { buildUserBill } from '../lib/buildBill';
+import buildBill, { buildUserPay } from '../lib/buildBill';
 
 const Panel = Collapse.Panel;
 
@@ -14,13 +14,12 @@ class App extends React.Component {
     this.state = {
       activeSection: 1,
       bill: [],
-      totalBeforeDiscountEuro: 0,
-      totalAfterDiscountEuro: 0,
-      discount: 0,
-      discountEuro: 0,
+      parseChecksum: null,
+      computedBillTotal: null,
+      discount: null,
       people: people ? people.split(',').sort() : [],
-      checkSumIsValid: false,
-      perUserBill: null,
+      userPay: [],
+      payChecksum: null,
     };
   }
 
@@ -30,38 +29,58 @@ class App extends React.Component {
     }));
   };
 
+  setPersonAssignmentToLocalStorage = () => {
+    const personAssignment = this.state.bill.map(billItem => billItem.people);
+    console.debug('person to bill assignment', personAssignment);
+    window.localStorage.setItem('personAssignment', JSON.stringify(personAssignment));
+  };
+
+  getPersonAssignmentFromLocalStorage = () => {
+    let personAssignment = window.localStorage.getItem('personAssignment');
+    if (personAssignment) {
+      personAssignment = JSON.parse(personAssignment);
+      this.setState(({ bill }) => {
+        bill.forEach((billItem, billItemIndex) => {
+          billItem.people = personAssignment[billItemIndex];
+        });
+        return ({ bill });
+      });
+    }
+  };
+
   nextSection = () => {
     this.setState(({ activeSection }) => ({
       activeSection: activeSection + 1,
-    }));
+    }), () => {
+      if (this.state.activeSection === 2 && this.state.people.length) {
+        this.getPersonAssignmentFromLocalStorage();
+      }
+    });
   };
 
   parseTextBill = textBill => {
     if (textBill) {
       const {
         bill,
-        totalAfterDiscountEuro,
-        totalBeforeDiscountEuro,
         discount,
+        computedBillTotal,
+        parseChecksum,
       } = buildBill(textBill);
       if (bill.length) {
         this.setState(
           () => ({
             bill,
-            totalAfterDiscountEuro,
-            totalBeforeDiscountEuro,
             discount,
+            computedBillTotal,
+            parseChecksum,
           }),
-          () => {
-            this.nextSection();
-            console.debug('The bill', this.state.bill);
-          },
+          () => this.nextSection(),
         );
       } else {
-        console.log('Parsing error');
+        console.error('Parsing error');
       }
     } else {
-      console.log('No text bill');
+      console.error('No text bill');
     }
   };
 
@@ -70,7 +89,7 @@ class App extends React.Component {
       this.setState(
         ({ people }) => ({ people: [...people, name].sort() }),
         () => {
-          console.log('people', this.state.people);
+          console.debug('people', this.state.people);
           window.localStorage.setItem('people', this.state.people);
         },
       );
@@ -92,7 +111,7 @@ class App extends React.Component {
         };
       },
       () => {
-        console.log('people', this.state.people);
+        console.debug('people', this.state.people);
         window.localStorage.setItem('people', this.state.people);
       },
     );
@@ -112,18 +131,21 @@ class App extends React.Component {
         return { bill };
       },
       () => {
-        console.log('the bill', this.state.bill);
+        this.setPersonAssignmentToLocalStorage();
       },
     );
   };
 
-  computePerUserBill = () => {
+  computeUserPay = () => {
+    const { userPay, payChecksum } = buildUserPay(
+      this.state.people,
+      this.state.bill,
+      this.state.discount,
+      this.state.computedBillTotal,
+    );
     this.setState({
-      perUserBill: buildUserBill(
-        this.state.people,
-        this.state.bill,
-        this.state.discount,
-      ),
+      userPay,
+      payChecksum,
     });
   };
 
@@ -219,7 +241,7 @@ class App extends React.Component {
                   type="primary"
                   onClick={() => {
                     this.nextSection();
-                    this.computePerUserBill();
+                    this.computeUserPay();
                   }}>
                   <Icon type="down" /> Next <Icon type="down" />
                 </Button>
@@ -246,21 +268,14 @@ class App extends React.Component {
             key="3">
             <br />
             <br />
-            {this.state.perUserBill &&
-              Object.keys(this.state.perUserBill).map(person => (
-                <p key={person}>
-                  <b>{person}</b>
+            {this.state.userPay.map(userPayItem => (
+                <p key={userPayItem.user}>
+                  <b>{userPayItem.user}</b>
                   {': '}
-                  <i>{this.state.perUserBill[person].items.join(' + ')}</i>
-                  <span>
-                    {`= ${this.state.perUserBill[person].payBeforeDiscount}`}
-                  </span>
-                  <span>
-                    {'. '}
-                    After discount
-                    {': '}
-                    <b>{this.state.perUserBill[person].payAfterDiscount}</b>
-                  </span>
+                  <i>{userPayItem.info}</i>
+                  <b>
+                    {`= ${userPayItem.payStr}`}
+                  </b>
                 </p>
               ))}
           </Panel>
