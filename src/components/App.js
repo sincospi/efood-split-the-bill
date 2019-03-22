@@ -4,6 +4,7 @@ import { Button, Icon, Collapse, Tag } from 'antd';
 import InputForm from './InputForm';
 import BillList from './BillList';
 import buildBill, { buildUserPay } from '../lib/buildBill';
+import copyToClipboard from '../lib/copy_to_clipboard';
 
 const Panel = Collapse.Panel;
 
@@ -156,7 +157,15 @@ class App extends React.Component {
     );
   }
 
-  // componentDidMount() {}
+  clipboardText() {
+    const payText = this.state.userPay.map(userPayItem => {
+      const userInfoAndPayStr = (userPayItem.info !== userPayItem.payStr) ? `${userPayItem.info} = ${userPayItem.payStr}` : userPayItem.payStr;
+      return `${userPayItem.user}: ${userInfoAndPayStr}`;
+    }).join('\n');
+    const artText1 = '====================';
+    const artText2 = '    ¯\\_(ツ)_/¯';
+    return [payText, artText1, artText2].join('\n');
+  }
 
   render() {
     return (
@@ -269,15 +278,18 @@ class App extends React.Component {
             <br />
             <br />
             {this.state.userPay.map(userPayItem => (
-                <p key={userPayItem.user}>
-                  <b>{userPayItem.user}</b>
-                  {': '}
-                  <i>{userPayItem.info}</i>
-                  <b>
-                    {` = ${userPayItem.payStr}`}
-                  </b>
-                </p>
-              ))}
+              <p id="per-person-payable" key={userPayItem.user}>
+                <b>{userPayItem.user}</b>
+                {': '}
+                {(userPayItem.info !== userPayItem.payStr) && <i>{`${userPayItem.info} = `}</i>}
+                <b>
+                  {userPayItem.payStr}
+                </b>
+              </p>
+            ))}
+            <Button onClick={() => copyToClipboard(this.clipboardText())}>
+              <Icon type="copy" /> Copy to Clipboard
+            </Button>
           </Panel>
         </Collapse>
       </div>
