@@ -274,7 +274,7 @@ class App extends React.Component {
                   {': '}
                   <i>{userPayItem.info}</i>
                   <b>
-                    {`= ${userPayItem.payStr}`}
+                    {` = ${userPayItem.payStr}`}
                   </b>
                 </p>
               ))}
