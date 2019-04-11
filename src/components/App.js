@@ -1,11 +1,12 @@
 import React from 'react';
-import { Button, Icon, Collapse, Tag } from 'antd';
+import { Typography, Button, Icon, Collapse, Tag } from 'antd';
 
 import InputForm from './InputForm';
 import BillList from './BillList';
 import buildBill, { buildUserPay } from '../lib/buildBill';
 import copyToClipboard from '../lib/copy_to_clipboard';
 
+const { Text } = Typography;
 const Panel = Collapse.Panel;
 
 class App extends React.Component {
@@ -157,7 +158,7 @@ class App extends React.Component {
     );
   }
 
-  clipboardText() {
+  analysisTextForClipboard() {
     const payText = this.state.userPay.map(userPayItem => {
       const userInfoAndPayStr = (userPayItem.info !== userPayItem.payStr) ? `${userPayItem.info} = ${userPayItem.payStr}` : userPayItem.payStr;
       return `${userPayItem.user}: ${userInfoAndPayStr}`;
@@ -165,6 +166,11 @@ class App extends React.Component {
     const artText1 = '====================';
     const artText2 = '    ¯\\_(ツ)_/¯';
     return [payText, artText1, artText2].join('\n');
+  }
+
+  textForLedger() {
+    const userAmounts = this.state.userPay.map(userPayItem => `@${userPayItem.user} ${userPayItem.payStr}`).join(' ');
+    return `/ledger ${userAmounts} e-food order`.replace(/ €/g, '');
   }
 
   render() {
@@ -287,7 +293,16 @@ class App extends React.Component {
                 </b>
               </p>
             ))}
-            <Button onClick={() => copyToClipboard(this.clipboardText())}>
+            <Button onClick={() => copyToClipboard(this.analysisTextForClipboard())}>
+              <Icon type="copy" /> Copy to Clipboard
+            </Button>
+            <br />
+            <br />
+            <br />
+            <p>
+              <Text type="warning" code>{this.textForLedger()}</Text>
+            </p>
+            <Button onClick={() => copyToClipboard(this.textForLedger())}>
               <Icon type="copy" /> Copy to Clipboard
             </Button>
           </Panel>
